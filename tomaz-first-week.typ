@@ -1,10 +1,10 @@
 // First-week aerodynamic model report. All figures are static evaluations.
 // Generate the figures from the repository root before compiling:
 //   python -m scripts.tomaz_aerodynamics
-//   python -m scripts.aerodynamic_report --source-pdf /path/to/Seo_2004_Aerodynamic_force_data.pdf
-//   python -m scripts.coefficient_precision_report --source-pdf /path/to/Seo_2004_Aerodynamic_force_data.pdf
+//   python -m scripts.aerodynamic_report
+//   python -m scripts.coefficient_precision_report
 //   typst compile tomaz-first-week.typ /tmp/tomaz-first-week.pdf
-// Python generators require matplotlib; the PDF audit requires pdftotext.
+// Python generators require matplotlib. Coefficients: scripts/seo2004_coefficients.csv.
 // Figures and numerical reports are generated output, not versioned inputs.
 #import "@preview/touying:0.8.0": *
 #import themes.simple: *
@@ -195,7 +195,7 @@ I compare $theta$ at the same prescribed $alpha$, with $lambda = 10°$.
 
 == Verification of the aerodynamic implementation
 
-- I checked *all 135 coefficients* against independently extracted PDF tables.
+- I checked *all 135 coefficients* against a reference transcription of the paper's tables.
 - I verified signs, exponent indices, and degree conversion.
 - *Nine aerodynamic reference tests pass*: scaling, directions, wind conversion,
   input validation, angle bounds, and representative curve behaviour.
@@ -262,7 +262,7 @@ My deliverable consists of:
 This week, I completed the aerodynamic formulation and its static verification.\
 The model is prepared for connection to the flight solver in the following week.
 
-#source[Reference evaluator and embedded coefficient tables: scripts/tomaz_aerodynamics.py. Static report generators: scripts/aerodynamic_report.py and scripts/coefficient_precision_report.py. Sources: the two supplied Seo (2004) papers.]
+#source[Reference evaluator: scripts/tomaz_aerodynamics.py. Coefficients: scripts/seo2004_coefficients.csv. Static report generators: scripts/aerodynamic_report.py and scripts/coefficient_precision_report.py. Sources: the two supplied Seo (2004) papers.]
 
 == References
 
@@ -280,4 +280,4 @@ _Sports Engineering_ 7(2), 97–103, supplied scan.
 
 I use pp. 98–99 for coordinates, air-relative wind convention, and angles.
 
-#source[Source PDFs: Seo_2004_Aerodynamic_force_data.pdf and Seo_2004_Optimal_flight_technique.pdf. All page numbers above are printed journal pages. The aerodynamic PDF is supplied as an external audit input.]
+#source[Source PDFs: Seo_2004_Aerodynamic_force_data.pdf and Seo_2004_Optimal_flight_technique.pdf. All page numbers above are printed journal pages. The scripts use the transcribed coefficient tables; the PDFs are not required to run them.]

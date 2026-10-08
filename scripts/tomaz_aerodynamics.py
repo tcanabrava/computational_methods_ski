@@ -1,74 +1,26 @@
-"""Free-flight fits from Seo, Watanabe & Murakami (2004), pp. 34–36.
+"""Seo, Watanabe & Murakami (2004), equations (4)–(6) and Tables 1–3.
 
-All public angles are radians. Only polynomial evaluation uses degrees.
-Positive moment is nose-up. Run python -m scripts.tomaz_aerodynamics
-to execute the nine reference checks. The coefficient data is embedded so
-this first-week report does not depend on the flight application.
+Pass angles in radians; the paper's polynomials use degrees.
+Run the reference checks with: python -m scripts.tomaz_aerodynamics
 """
 
 import csv
+import math
+import unittest
 from dataclasses import dataclass
 from math import atan2, cos, degrees, fsum, hypot, isfinite, sin
-from io import StringIO
+from pathlib import Path
 
 REFERENCE_HEIGHT_M = 1.76
 MEASURED_ANGLE_RANGES_DEG = ((0.0, 50.0), (0.0, 40.0), (0.0, 25.0))
 MEASURED_SPEED_RANGE_M_S = (20.0, 25.0)
-
-
-# Seo (2004), printed p. 36. Independently audited by aerodynamic_report.
-COEFFICIENT_CSV = """i,j,k,drag_area,lift_area,moment_volume
-0,0,0,8.54e-2,4.79e-2,7.87e-3
-0,0,1,5.33e-4,-5.78e-3,-2.17e-3
-0,0,2,-1.24e-4,2.63e-4,1.64e-4
-0,1,0,7.90e-5,5.91e-3,2.52e-3
-0,1,1,7.05e-5,2.57e-4,4.41e-4
-0,1,2,9.07e-6,-9.12e-6,-1.58e-5
-0,2,0,1.50e-4,2.79e-5,1.36e-5
-0,2,1,-2.37e-6,-3.78e-6,-9.50e-6
-0,2,2,-1.67e-7,-1.62e-8,3.21e-7
-1,0,0,3.74e-4,4.78e-3,5.77e-5
-1,0,1,-3.82e-4,-1.02e-3,5.39e-4
-1,0,2,2.38e-5,7.87e-5,-2.63e-5
-1,1,0,2.71e-4,6.50e-4,6.90e-4
-1,1,1,-3.63e-5,-1.41e-5,-1.99e-4
-1,1,2,-6.02e-8,-3.41e-6,7.54e-6
-1,2,0,3.74e-6,-1.51e-5,-1.41e-5
-1,2,1,9.61e-7,1.15e-6,4.74e-6
-1,2,2,-9.33e-9,5.33e-8,-1.88e-7
-2,0,0,4.53e-5,5.20e-4,5.16e-5
-2,0,1,4.19e-5,9.20e-5,-3.86e-5
-2,0,2,-1.38e-6,-5.02e-6,1.41e-6
-2,1,0,4.25e-5,4.39e-6,-3.19e-5
-2,1,1,6.17e-7,1.59e-6,1.35e-5
-2,1,2,3.64e-8,2.02e-7,-5.61e-7
-2,2,0,-1.49e-6,-6.47e-7,3.82e-7
-2,2,1,-2.05e-8,-9.23e-8,-3.33e-7
-2,2,2,-1.54e-10,-2.79e-9,1.48e-8
-3,0,0,1.20e-5,-8.85e-6,-4.00e-6
-3,0,1,-1.56e-6,-2.33e-6,1.04e-6
-3,0,2,4.91e-8,1.13e-7,-3.20e-8
-3,1,0,-1.71e-6,-1.12e-6,4.26e-7
-3,1,1,6.70e-8,-7.78e-9,-3.22e-7
-3,1,2,-3.62e-9,-5.30e-9,1.39e-8
-3,2,0,4.73e-8,3.64e-8,8.00e-10
-3,2,1,-7.22e-10,1.84e-9,7.90e-9
-3,2,2,4.09e-11,5.67e-11,-3.73e-10
-4,0,0,-1.63e-7,9.96e-9,4.03e-8
-4,0,1,1.56e-8,1.99e-8,-7.89e-9
-4,0,2,-4.75e-10,-9.03e-10,2.08e-10
-4,1,0,1.67e-8,1.36e-8,-1.46e-9
-4,1,1,-9.27e-10,-3.46e-10,2.45e-9
-4,1,2,4.15e-11,4.95e-11,-1.07e-10
-4,2,0,-4.05e-10,-3.58e-10,-5.47e-11
-4,2,1,8.76e-12,-8.53e-12,-6.05e-11
-4,2,2,-3.92e-13,-4.38e-13,2.95e-12
-"""
+COEFFICIENT_CSV = Path(__file__).with_name("seo2004_coefficients.csv")
 
 
 def coefficient_rows():
-    """Published Tables 1–3, retaining the printed significant digits."""
-    return list(csv.DictReader(StringIO(COEFFICIENT_CSV)))
+    """Return the coefficients as strings, without losing printed precision."""
+    with COEFFICIENT_CSV.open(newline="", encoding="utf-8") as stream:
+        return list(csv.DictReader(stream))
 
 
 def _load_coefficients():
@@ -77,11 +29,12 @@ def _load_coefficients():
     expected = {(i, j, k) for i in range(5) for j in range(3) for k in range(3)}
     if len(indices) != 45 or set(indices) != expected:
         raise ValueError("Aerodynamic coefficient table is incomplete or duplicated")
-    return tuple(
-        (index, tuple(float(row[key]) for key in
-                      ("drag_area", "lift_area", "moment_volume")))
-        for index, row in zip(indices, rows)
-    )
+    coefficients = []
+    for index, row in zip(indices, rows):
+        values = (float(row["drag_area"]), float(row["lift_area"]),
+                  float(row["moment_volume"]))
+        coefficients.append((index, values))
+    return tuple(coefficients)
 
 
 _COEFFICIENTS = _load_coefficients()
@@ -113,11 +66,10 @@ def _require_finite(**values):
 def aerodynamic_properties(alpha_rad, theta_rad, ski_opening_rad, *,
                            height_m=REFERENCE_HEIGHT_M,
                            allow_extrapolation=False):
-    """Evaluate S_D [m²], S_L [m²], Q_M [m³] at a posture.
+    """Return S_D (m²), S_L (m²) and Q_M (m³) for the given posture.
 
-    Reject angles outside the experimental envelope by default. Explicit
-    extrapolation returns within_angle_domain=False without clipping angles
-    or outputs. Height scaling is the paper's approximate similarity rule.
+    Out-of-range angles raise ValueError unless allow_extrapolation is set.
+    Extrapolated results are flagged; the angles are never clipped.
     """
     _require_finite(alpha_rad=alpha_rad, theta_rad=theta_rad,
                     ski_opening_rad=ski_opening_rad, height_m=height_m)
@@ -134,22 +86,30 @@ def aerodynamic_properties(alpha_rad, theta_rad, ski_opening_rad, *,
             "set allow_extrapolation=True to evaluate and flag them"
         )
     alpha, theta, opening = angles
-    terms = [(alpha ** i * theta ** j * opening ** k, coefficients)
-             for (i, j, k), coefficients in _COEFFICIENTS]
-    sd, sl, qm = (fsum(power * coefficients[column]
-                      for power, coefficients in terms) for column in range(3))
+    # Equations (4)–(6): sum c_ijk * alpha^i * theta^j * lambda^k.
+    terms = []
+    for (i, j, k), coefficients in _COEFFICIENTS:
+        power = alpha ** i * theta ** j * opening ** k
+        terms.append((power, coefficients))
+    sd = fsum(power * coefficients[0] for power, coefficients in terms)
+    sl = fsum(power * coefficients[1] for power, coefficients in terms)
+    qm = fsum(power * coefficients[2] for power, coefficients in terms)
+
+    # The paper scales areas with height squared and moments with height cubed.
     ratio = height_m / REFERENCE_HEIGHT_M
-    return AerodynamicProperties(sd * ratio ** 2, sl * ratio ** 2,
-                                 qm * ratio ** 3, within_domain)
+    return AerodynamicProperties(
+        sd * ratio ** 2, sl * ratio ** 2,
+        qm * ratio ** 3, within_domain,
+    )
 
 
 def aerodynamic_forces(air_speed_m_s, alpha_rad, theta_rad, ski_opening_rad,
                        *, air_density_kg_m3, height_m=REFERENCE_HEIGHT_M,
                        allow_extrapolation=False):
-    """Apply dynamic pressure to the polynomial properties.
+    """Multiply S_D, S_L and Q_M by dynamic pressure (0.5 * rho * U²).
 
-    Density is explicit. Speeds outside 20–25 m/s are allowed and flagged:
-    coefficients were measured at those speeds, but flight may exceed them.
+    Positive moment is nose-up. Speeds outside the measured 20–25 m/s
+    range are allowed, but within_measured_speed_range will be False.
     """
     _require_finite(air_speed_m_s=air_speed_m_s,
                     air_density_kg_m3=air_density_kg_m3)
@@ -170,7 +130,7 @@ def aerodynamic_forces(air_speed_m_s, alpha_rad, theta_rad, ski_opening_rad,
 
 
 def angle_of_attack(body_angle_rad, air_path_angle_rad, theta_rad):
-    """alpha = phi - beta_r - theta; do not wrap or clip physical angles."""
+    """alpha = phi - beta_r - theta, in radians."""
     _require_finite(body_angle_rad=body_angle_rad,
                     air_path_angle_rad=air_path_angle_rad, theta_rad=theta_rad)
     return body_angle_rad - air_path_angle_rad - theta_rad
@@ -198,7 +158,7 @@ def ground_velocity(air_speed_m_s, air_path_angle_rad, wind_m_s):
 
 
 def aerodynamic_force_components(forces, air_path_angle_rad):
-    """Return aerodynamic (Fx, Fy) [N] for the solver or visual force arrows.
+    """Return aerodynamic (Fx, Fy) in newtons, with Y upward.
 
     Drag opposes air-relative motion; positive lift is the perpendicular
     direction (-sin(beta_r), cos(beta_r)). Gravity is separate.
@@ -209,18 +169,13 @@ def aerodynamic_force_components(forces, air_path_angle_rad):
             -forces.drag_n * s + forces.lift_n * c)
 
 
-# The nine original static aerodynamic reference checks.
-import math
-import unittest
-
 def posture(alpha=24, theta=10, opening=25):
     return tuple(math.radians(value) for value in (alpha, theta, opening))
 
 
 class AerodynamicsTests(unittest.TestCase):
     def test_figure4_behaviour(self):
-        # Independent physical observations: lift peaks near 37 degrees,
-        # drag increases, and pitching moment restores towards trim.
+        # Figure 4: increasing drag, lift peak near 37°, restoring moment.
         points = [aerodynamic_properties(*posture(alpha=a))
                   for a in range(0, 51)]
         self.assertTrue(all(right.drag_area_m2 > left.drag_area_m2
