@@ -25,8 +25,8 @@
 #let plot(path, height: 6cm) = align(center,
   image(path, width: 100%, height: height, fit: "contain"),
 )
-// Keep the discreet illustration inline so the report needs no extra asset.
-#let pole-dance-svg = ```xml
+
+#let easter-egg = ```xml
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 190">
   <title>Pole dancer</title>
   <g fill="none" stroke="#ededed" stroke-linecap="round" stroke-linejoin="round">
@@ -230,9 +230,8 @@ The authors' full-precision coefficients remain unavailable.\
 
 == Assumptions and limitations
 
-// A discreet, non-textual easter egg in the lower-right background.
 #place(top + right, dx: -1mm, dy: 76mm,
-  image(bytes(pole-dance-svg), format: "svg", width: 12mm),
+  image(bytes(easter-egg), format: "svg", width: 12mm),
 )
 
 - Quasi-steady, free-flight aerodynamic fit.
