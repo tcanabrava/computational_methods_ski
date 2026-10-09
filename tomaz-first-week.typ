@@ -1,5 +1,7 @@
 // First-week aerodynamic model report. All figures are static evaluations.
-// Generate the figures from the repository root before compiling:
+// Build the figures, verification records and PDF from the repository root:
+//   python -m scripts.build_first_week
+// To run the steps separately:
 //   python -m scripts.tomaz_aerodynamics
 //   python -m scripts.aerodynamic_report
 //   python -m scripts.coefficient_precision_report
