@@ -1,0 +1,16 @@
+# Results for Mukhamed’s tasks
+
+Open section 5 of `scripts/jump.ipynb`. Plots and conclusions are already saved in the notebook. To rerun the calculations, install NumPy, Matplotlib and Jupyter, and run the notebook from `scripts/`. No additional optimization libraries are required. CSV files contain the search results; NaN denotes a rejected candidate.
+
+### 5.5 Conclusions for the four tasks
+
+1. **Wind and posture.** At W=−1/0/+1 m/s, the computed distances are 152.269/151.265/150.166 m. Headwind increases distance and tailwind decreases it; the sensitivity is approximately −1.05 m per m/s, compared with −4 in the paper. At θ=7°, increasing ski opening from 0 to 25° increases distance from 129.122 to 151.265 m. At λ=25°, distance peaks near θ=8°. These trends reflect the combined effects of lift, drag and pitching moment, rather than lift alone.
+2. **Fixed posture.** The best point on the refined grid is θ=7.75°, λ=25°, X=151.312782 m. The gain over the 7°/25° baseline is 0.047920 m. The maximum with respect to λ lies at the boundary of the permitted range. The grid does not establish global optimality; 0.25°/0.5° describes the search spacing, not physical accuracy.
+3. **Variable posture.** Among the tested smooth transitions at θ=7°, the best increases λ from 24° to 25° over the first 0.5 s of the simulation (0.4–0.9 s after take-off), then holds 25°. X=151.265220 m, a gain of only 0.000357 m, or approximately 0.36 mm. This is smaller than the physical uncertainty of the model and performs worse than the best fixed posture. The result applies only to the tested parameter grid and control family.
+4. **Comparison.** The model exceeds the published fixed-posture distances by 17.269, 20.265 and 23.166 m. A distance of 151 m must not be interpreted as an improvement over the paper: the underlying model differs. In the original paper, variable λ reaches approximately 26°, whereas this search strictly enforces λ≤25°. The published 8 m gain has therefore not been reproduced; this is the outcome of the present experiment.
+
+**Checks.** Constant control reproduces the original solver. For the selected cases, the change in X when h decreases from 0.01 to 0.005 s is below 10⁻⁸ m; the landing residual is below 10⁻⁸ m. This checks numerical stability, not physical-model accuracy. Speeds of approximately 27.6–36.4 m/s lie outside the measured interval of 20–25 m/s, although angles remain within the permitted domain.
+
+**Next checks with the solver authors.** Verify mass, inertia, air density and the actual hill geometry. In the current hill model, the slope becomes horizontal after X=150 m, so the baseline landing occurs on the flat section. This may substantially affect distance and wind sensitivity; the cause of the discrepancy remains to be established. Pitching-moment coefficient precision and control constraints also matter. Further optimization should follow verification of these assumptions.
+
+Comparison source: [author-provided full text of Seo et al. (2004), Table 1 and the section The optimization of the ski-opening angle](https://www.researchgate.net/publication/226946622_Optimal_flight_technique_for_V-style_ski_jumping). Sections 1–4 retain their original content; all new calculations are in section 5.
